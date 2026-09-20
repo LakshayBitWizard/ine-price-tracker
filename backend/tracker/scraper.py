@@ -234,6 +234,9 @@ def scrape_products(
 
 
 def _scrape_once(product: TrackedProduct, *, headed: bool = False) -> ScrapedOffer:
+    import os
+    os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", "0")
+
     try:
         from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
         from playwright.sync_api import sync_playwright

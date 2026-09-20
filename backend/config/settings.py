@@ -3,6 +3,8 @@ import re
 import urllib.parse
 from pathlib import Path
 
+os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", "0")
+
 import dj_database_url
 from dotenv import load_dotenv
 
