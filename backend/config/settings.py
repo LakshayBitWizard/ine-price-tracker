@@ -83,11 +83,11 @@ def clean_database_url(url: str) -> str:
 
 raw_database_url = os.getenv("DATABASE_URL", "").strip()
 if raw_database_url:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            clean_database_url(raw_database_url), conn_max_age=600
-        )
-    }
+    cleaned_url = clean_database_url(raw_database_url)
+    db_config = dj_database_url.parse(cleaned_url, conn_max_age=0)
+    if "postgresql" in db_config.get("ENGINE", ""):
+        db_config.setdefault("OPTIONS", {})["sslmode"] = "require"
+    DATABASES = {"default": db_config}
 else:
     DATABASES = {
         "default": {
