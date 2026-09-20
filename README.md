@@ -4,6 +4,16 @@ A reliable, full-stack product price and stock monitoring application built for 
 
 ---
 
+## 🌐 Live Deployment Links
+
+- **Live Frontend Dashboard**: [https://ine-price-tracker-lakshaykhanna2005-4944s-projects.vercel.app](https://ine-price-tracker-lakshaykhanna2005-4944s-projects.vercel.app) *(Deployed on Vercel)*
+- **Live Backend API**: [https://ine-price-tracker-sr7i.onrender.com](https://ine-price-tracker-sr7i.onrender.com) *(Deployed on Render)*
+- **API Health Check**: [https://ine-price-tracker-sr7i.onrender.com/api/db-check/](https://ine-price-tracker-sr7i.onrender.com/api/db-check/)
+- **Database**: Supabase PostgreSQL
+- **Mock Storefront (Target)**: [https://demo.inelabteamdev.com/](https://demo.inelabteamdev.com/)
+
+---
+
 ## 🌟 Features
 
 - **Live Storefront Search**: Search products across the mock store by partial or full name with resilient multi-pass catalog lookup.
