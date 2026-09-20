@@ -149,6 +149,9 @@ class ScrapeRunView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def get(self, request):
+        return self.post(request)
+
 
 class ScrapeLogListView(generics.ListAPIView):
     serializer_class = ScrapeLogSerializer
