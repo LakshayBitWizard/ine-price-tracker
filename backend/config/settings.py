@@ -1,4 +1,6 @@
 import os
+import re
+import urllib.parse
 from pathlib import Path
 
 import dj_database_url
@@ -58,10 +60,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-database_url = os.getenv("DATABASE_URL", "").strip()
-if database_url:
+
+def clean_database_url(url: str) -> str:
+    url = url.strip().strip("'\"")
+    prefix = "postgresql://"
+    if url.startswith("postgres://"):
+        prefix = "postgres://"
+
+    if url.startswith(prefix):
+        body = url[len(prefix):]
+        if "@" in body and ":" in body.split("@", 1)[0]:
+            cred_part, host_part = body.rsplit("@", 1)
+            user, raw_pass = cred_part.split(":", 1)
+            # Remove brackets if user typed [mypassword]
+            if raw_pass.startswith("[") and raw_pass.endswith("]"):
+                raw_pass = raw_pass[1:-1]
+            unquoted = urllib.parse.unquote(raw_pass)
+            encoded_pass = urllib.parse.quote(unquoted, safe="")
+            return f"{prefix}{user}:{encoded_pass}@{host_part}"
+    return url
+
+
+raw_database_url = os.getenv("DATABASE_URL", "").strip()
+if raw_database_url:
     DATABASES = {
-        "default": dj_database_url.parse(database_url, conn_max_age=600)
+        "default": dj_database_url.parse(
+            clean_database_url(raw_database_url), conn_max_age=600
+        )
     }
 else:
     DATABASES = {
