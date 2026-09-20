@@ -392,34 +392,45 @@ def _perform_price_hover(page) -> None:
     box = block.bounding_box()
     if not box:
         raise ScrapeError("Price block has no visible bounding box")
-    center_x = box["x"] + box["width"] / 2
+    
+    start_x = box["x"] + 30
+    end_x = box["x"] + max(box["width"] - 30, 40)
     center_y = box["y"] + box["height"] / 2
-    page.mouse.move(center_x - 80, center_y - 20, steps=8)
-    for offset in range(10):
-        page.mouse.move(
-            center_x - 60 + offset * 13,
-            center_y + ((offset % 3) - 1) * 10,
-            steps=3,
-        )
-        page.wait_for_timeout(70)
-    page.wait_for_timeout(850)
+
+    # Perform 15 moves inside the box with 80ms interval (> 40ms threshold)
+    for i in range(15):
+        current_x = start_x + (end_x - start_x) * (i / 14.0)
+        current_y = center_y + ((i % 3) - 1) * 6
+        page.mouse.move(current_x, current_y)
+        page.wait_for_timeout(80)
+
+    # Wait 1000ms to comfortably exceed the 600ms minDwellMs requirement
+    page.wait_for_timeout(1000)
 
 
 def _click_reveal_price(page) -> None:
     button = page.get_by_role(
         "button", name=re.compile(r"Reveal price|Refresh price|Try again", re.I)
     ).first
-    for _ in range(3):
+    for attempt in range(3):
         try:
-            button.wait_for(state="visible", timeout=3000)
-            if button.is_enabled(timeout=1000):
-                button.click(timeout=3000)
-                page.wait_for_timeout(600)
-                if page.locator(".price-block.price-success").first.is_visible(
-                    timeout=1000
-                ):
-                    return
+            button.wait_for(state="visible", timeout=4000)
+            
+            # Dismiss any late-appearing cookie overlay right before clicking
+            page.evaluate("""() => {
+                document.querySelectorAll('.cookie-overlay, .cookie-banner').forEach(el => el.remove());
+            }""")
+            
+            # Click with force=True so any overlay doesn't block the click
+            button.click(force=True, timeout=5000)
+            
+            # The store API challenge and /price endpoint takes 2-5 seconds to return
+            page.locator(".price-block.price-success").first.wait_for(
+                state="visible", timeout=12000
+            )
+            return
         except Exception:
-            page.wait_for_timeout(600)
-    if not page.locator(".price-block.price-success").first.is_visible(timeout=1000):
+            page.wait_for_timeout(1000)
+
+    if not page.locator(".price-block.price-success").first.is_visible(timeout=2000):
         raise ScrapeError("Could not trigger the store's reveal price action")
