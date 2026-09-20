@@ -134,15 +134,39 @@ class ScrapeRunView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # For automated cron sweeps, run asynchronously in a background thread
+        # so cron-job.org gets an instant 200 OK without hitting its 30s free-tier timeout.
+        is_cron = not product_id and (
+            request.path.rstrip("/").endswith("/cron/scrape")
+            or bool(request.query_params.get("secret"))
+        )
+        if is_cron:
+            import threading
+            from django.db import close_old_connections
+
+            def run_in_bg():
+                close_old_connections()
+                try:
+                    scrape_products(
+                        product_id=None,
+                        force=False,
+                        headed=False,
+                    )
+                except Exception:
+                    import logging
+                    logging.exception("Background cron scrape failed")
+                finally:
+                    close_old_connections()
+
+            threading.Thread(target=run_in_bg, daemon=True).start()
+            return Response({"ok": True, "status": "job_started"})
+
         try:
             summary = scrape_products(
                 product_id=product_id,
                 force=bool(request.data.get("force", False)),
                 headed=bool(request.data.get("headed", False)),
             )
-            # cron-job.org free tier limits response body size; return minimal payload for cron
-            if not product_id and (request.path.rstrip("/").endswith("/cron/scrape") or request.query_params.get("secret")):
-                return Response({"ok": True, "count": summary.get("count", 0)})
             return Response(summary)
         except Exception as exc:
             import logging
