@@ -1,0 +1,41 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.env
+
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Databases & local storage
+*.sqlite3
+db.sqlite3
+
+# Django static files & media
+staticfiles/
+media/
+
+# Frontend dependencies & build artifacts
+node_modules/
+dist/
+build/
+.vercel/
+
+# Playwright & test caches
+.cache/
+test-results/
+playwright-report/
+
+# OS and IDE temporary files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
