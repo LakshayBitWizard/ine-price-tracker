@@ -112,21 +112,26 @@ class PriceHistoryListView(generics.ListAPIView):
 
 class ScrapeRunView(APIView):
     def post(self, request):
-        expected_secret = settings.CRON_SECRET
+        product_id = request.data.get("product_id")
+        auth_header = request.headers.get("Authorization", "")
+        bearer_token = (
+            auth_header.split("Bearer ", 1)[1].strip()
+            if "Bearer " in auth_header
+            else ""
+        )
         provided_secret = (
             request.headers.get("X-Cron-Secret")
+            or bearer_token
             or request.query_params.get("secret")
             or request.data.get("secret")
         )
-        if expected_secret and provided_secret != expected_secret:
+        expected_secret = settings.CRON_SECRET
+
+        # If it's not an individual product scrape triggered from UI, require cron secret
+        if not product_id and expected_secret and provided_secret != expected_secret:
             return Response(
                 {"detail": "Invalid cron secret."},
                 status=status.HTTP_403_FORBIDDEN,
-            )
-        if not expected_secret and not settings.DEBUG:
-            return Response(
-                {"detail": "CRON_SECRET must be configured in production."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         summary = scrape_products(

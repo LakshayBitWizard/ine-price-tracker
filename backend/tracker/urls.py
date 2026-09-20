@@ -18,6 +18,7 @@ urlpatterns = [
     path("price-history/", PriceHistoryListView.as_view(), name="price-history-list"),
     path("scrape-logs/", ScrapeLogListView.as_view(), name="scrape-log-list"),
     path("scrape/run/", ScrapeRunView.as_view(), name="scrape-run"),
+    path("cron/scrape/", ScrapeRunView.as_view(), name="cron-scrape"),
     path(
         "products/<uuid:product_id>/price-history/",
         PriceHistoryListView.as_view(),
