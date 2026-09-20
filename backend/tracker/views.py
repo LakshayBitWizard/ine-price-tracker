@@ -140,6 +140,9 @@ class ScrapeRunView(APIView):
                 force=bool(request.data.get("force", False)),
                 headed=bool(request.data.get("headed", False)),
             )
+            # cron-job.org free tier limits response body size; return minimal payload for cron
+            if not product_id and (request.path.rstrip("/").endswith("/cron/scrape") or request.query_params.get("secret")):
+                return Response({"ok": True, "count": summary.get("count", 0)})
             return Response(summary)
         except Exception as exc:
             import logging
