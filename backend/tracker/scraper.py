@@ -254,6 +254,12 @@ def _scrape_once(product: TrackedProduct, *, headed: bool = False) -> ScrapedOff
         browser = playwright.chromium.launch(
             headless=not headed,
             slow_mo=settings.SCRAPER_SLOW_MO_MS if headed else 0,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+            ],
         )
         context = browser.new_context(
             viewport={"width": 1366, "height": 900},

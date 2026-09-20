@@ -134,12 +134,20 @@ class ScrapeRunView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        summary = scrape_products(
-            product_id=request.data.get("product_id"),
-            force=bool(request.data.get("force", False)),
-            headed=bool(request.data.get("headed", False)),
-        )
-        return Response(summary)
+        try:
+            summary = scrape_products(
+                product_id=product_id,
+                force=bool(request.data.get("force", False)),
+                headed=bool(request.data.get("headed", False)),
+            )
+            return Response(summary)
+        except Exception as exc:
+            import logging
+            logging.exception("ScrapeRunView failed")
+            return Response(
+                {"detail": f"Scrape execution failed: {exc}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ScrapeLogListView(generics.ListAPIView):
