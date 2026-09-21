@@ -143,6 +143,7 @@ class ScrapeRunView(APIView):
         if is_cron:
             import threading
             from django.db import close_old_connections
+            from django.http import HttpResponse
 
             def run_in_bg():
                 close_old_connections()
@@ -159,7 +160,9 @@ class ScrapeRunView(APIView):
                     close_old_connections()
 
             threading.Thread(target=run_in_bg, daemon=True).start()
-            return Response({"ok": True, "status": "job_started"})
+            resp = HttpResponse("OK", content_type="text/plain", status=200)
+            resp["Content-Length"] = "2"
+            return resp
 
         try:
             summary = scrape_products(
