@@ -152,6 +152,7 @@ class ScrapeRunView(APIView):
                         product_id=None,
                         force=False,
                         headed=False,
+                        limit=2,
                     )
                 except Exception:
                     import logging

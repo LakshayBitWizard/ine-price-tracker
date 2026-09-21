@@ -102,7 +102,7 @@ def parse_stock(stock_text: str) -> tuple[int | None, bool]:
     )
 
 
-def due_products():
+def due_products(limit: int | None = None):
     now = timezone.now()
     products = TrackedProduct.objects.filter(is_active=True).order_by("created_at")
     due_ids = []
@@ -115,7 +115,11 @@ def due_products():
         )
         if next_due_at <= now:
             due_ids.append(product.id)
-    return TrackedProduct.objects.filter(id__in=due_ids).order_by("created_at")
+    # Prioritize oldest scraped products first
+    qs = TrackedProduct.objects.filter(id__in=due_ids).order_by("last_scrape_at")
+    if limit:
+        qs = qs[:limit]
+    return qs
 
 
 def scrape_product(product: TrackedProduct, *, headed: bool = False) -> dict[str, Any]:
@@ -215,15 +219,23 @@ def scrape_products(
     product_id: str | None = None,
     force: bool = False,
     headed: bool = False,
+    limit: int | None = None,
 ) -> dict[str, Any]:
     if product_id:
         products = TrackedProduct.objects.filter(id=product_id, is_active=True)
     elif force:
         products = TrackedProduct.objects.filter(is_active=True).order_by("created_at")
+        if limit:
+            products = products[:limit]
     else:
-        products = due_products()
+        products = due_products(limit=limit)
 
-    results = [scrape_product(product, headed=headed) for product in products]
+    import gc
+    results = []
+    for product in products:
+        results.append(scrape_product(product, headed=headed))
+        gc.collect()
+
     return {
         "requested_product_id": product_id,
         "force": force,
@@ -262,6 +274,9 @@ def _scrape_once(product: TrackedProduct, *, headed: bool = False) -> ScrapedOff
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
+                "--no-zygote",
+                "--disable-extensions",
+                "--disable-background-networking",
             ],
         )
         context = browser.new_context(
